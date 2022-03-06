@@ -112,11 +112,11 @@ def data_processor(value):
     print(f"Hydrophobic amino acids: {round(sum(hydrophobic, 2))}%")
     print(f"Hydrophilic amino acids: {round(sum(hydrophilic, 2))}%")
     print(f"Most common amino acids")
-    for keys in most_common:
-        print(f"{keys[0]} : {keys[1]}%")
+    for element in most_common:
+        print(f"{element[0]} : {element[1]}%")
     print(f"Least common amino acids")
-    for keys in least_common:
-        print(f"{keys[0]} : {keys[1]}%")
+    for element in least_common:
+        print(f"{element[0]} : {element[1]}%")
     amino_counter.update({}.fromkeys(amino_counter, 0))
 
 
