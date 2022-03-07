@@ -13,7 +13,7 @@ def file_acceptor():
     arguments as "files" in a list.
 
     :return file_list"""
-    file_extension = ".FASTA"
+    file_extension = (".FASTA", ".fasta", ".txt")
     file_list = []
     for file in os.listdir():
         if file.endswith(file_extension):
