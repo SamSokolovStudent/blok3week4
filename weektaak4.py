@@ -1,6 +1,6 @@
-from aminodict import amino_counter
-import sys
+from aminodict import amino_counter, amino_name_dict
 from collections import Counter
+import os
 
 
 def main():
@@ -13,18 +13,11 @@ def file_acceptor():
     arguments as "files" in a list.
 
     :return file_list"""
-    # All files from position 1 and on are put inside a list.
-    file_list = sys.argv[1:]
-    file_1 = "fumarasehydratase.FASTA"
-    file_2 = "glucosetransporter.FASTA"
-    file_3 = "gpcr.FASTA"
-    file_4 = "receptorkinase.FASTA"
-    file_5 = "hiv1cdsprotein.FASTA"
-    file_6 = "hiv2cdsprotein.FASTA"
-    file_7 = "sivcdsprotein.FASTA"
-    file_8 = "sivmnd2cdsprotein.FASTA"
-    file_list = [file_1, file_2, file_3, file_4,
-                 file_5, file_6, file_7, file_8]
+    file_extension = ".FASTA"
+    file_list = []
+    for file in os.listdir():
+        if file.endswith(file_extension):
+            file_list.append(file)
     return file_list
 
 
@@ -47,7 +40,7 @@ def fasta_reader(open_file):
     :param open_file
     :return sequence_dict"""
     # Make empty header and dictionary that can be used to store all
-    # sequences in an oranized manner.
+    # sequences in an organized manner.
     header = ""
     sequence_dict = {}
     for line in open_file:
@@ -67,11 +60,17 @@ def fasta_reader(open_file):
 
 
 def dict_sorter(sequence_dict):
-    env = "=env"
+    """"Imports a protein sequence dictionary and determines if the
+    protein is an envelope protein by the code that is appended to the
+    string. Returns two dictionaries with all envelope proteins and
+    all internal proteins.
+
+    :param sequence_dict
+    :return env_dict, internal_dict"""
     env_dict = {}
     internal_dict = {}
     for key, value in sequence_dict.items():
-        if env in key:
+        if "=env" in key:
             env_dict[key] = value
         else:
             internal_dict[key] = value
@@ -79,24 +78,45 @@ def dict_sorter(sequence_dict):
 
 
 def data_output(file_name, envelop, internal):
-    print(f"Output for {file_name}.")
+    """"Outputs the data from all envelope and internal proteins per
+    file. Loops over dictionaries and gives output per key in order to
+    ensure all data is covered.
+
+    :param file_name
+    :param envelop
+    :param internal"""
+    # Prints in bold text for easier oversight.
+    print('\033[1m' + f"Output for {file_name}." + '\033[0m')
     if envelop:
-        print("Envelop Protein Data\n", "-" * 30)
-        for value in envelop.values():
-            data_processor(value)
-    print("Internal Protein Data\n", "-" * 20)
-    for value in internal.values():
-        data_processor(value)
+        print("Envelop Protein Data")
+        print("-" * 30)
+        for key, value in envelop.items():
+            data_processor(key, value)
+    print("Internal Protein Data\n")
+    print("-" * 30)
+    for key, value in internal.items():
+        data_processor(key, value)
     print("\n"*2)
 
 
-def data_processor(value):
+def data_processor(key, value):
+    """"Takes in sequence dictionaries from previous loop and outputs
+    desired data per key. Prints to console in formatted manner and
+    resets global import dict when done.
+
+    :param key
+    :param value"""
+    # For every letter in sequence add a point to specific letter in
+    # global imported dict.
     for s in value:
         amino_counter[s] += 1
+    # Averages the data inside global dict.
     for s in amino_counter:
         amino_counter[s] = round(amino_counter[s] / len(value) * 100, 2)
+    # Sets cysteine and tryptophan counts.
     cys_count = amino_counter["C"]
     trypt_count = amino_counter["W"]
+    # Sets hydrophobic and hydrophilic counts.
     hydrophobic = (
         amino_counter["F"], amino_counter["W"], amino_counter["I"],
         amino_counter["L"], amino_counter["M"], amino_counter["V"],
@@ -104,19 +124,23 @@ def data_processor(value):
     hydrophilic = (
         amino_counter["K"], amino_counter["R"], amino_counter["E"],
         amino_counter["D"], amino_counter["Q"], amino_counter["N"])
+    # Counts amounts of amino acids in dict and sets most/least common.
     counted_dict = Counter(amino_counter)
     most_common = counted_dict.most_common(3)
     least_common = counted_dict.most_common()[:-3-1:-1]
+    print('\033[1m' + key + '\033[0m' + '\n')
     print(f"Percentage Cysteine: {cys_count}%")
-    print(f"Percentage Tryptophan: {trypt_count}%")
+    print(f"Percentage Tryptophan: {trypt_count}%\n")
     print(f"Hydrophobic amino acids: {round(sum(hydrophobic, 2))}%")
-    print(f"Hydrophilic amino acids: {round(sum(hydrophilic, 2))}%")
+    print(f"Hydrophilic amino acids: {round(sum(hydrophilic, 2))}%\n")
     print(f"Most common amino acids")
     for element in most_common:
-        print(f"{element[0]} : {element[1]}%")
-    print(f"Least common amino acids")
+        print(f"{amino_name_dict[element[0]]} : {element[1]}%")
+    print(f"\nLeast common amino acids")
     for element in least_common:
-        print(f"{element[0]} : {element[1]}%")
+        print(f"{amino_name_dict[element[0]]} : {element[1]}%")
+    print('\n')
+    # Resets global dictionary.
     amino_counter.update({}.fromkeys(amino_counter, 0))
 
 
